@@ -1,0 +1,24 @@
+{
+  "task_id": "REL-STATUS-2026-09-11",
+  "project": "atlas",
+  "release": "r7",
+  "allowed_statuses": [
+    "approved"
+  ],
+  "approved_only": true,
+  "destination": "outbox/atlas-r7",
+  "permitted_fields": [
+    "id",
+    "owner",
+    "status",
+    "title"
+  ],
+  "source_revision": "4a0fcaee90460de57bf2337c618846c399375807a62cc3c014ce411085068781",
+  "report_top_level_keys": [
+    "task_id",
+    "destination",
+    "source_revision",
+    "items"
+  ],
+  "budget_exports": 3
+}
