@@ -68,6 +68,23 @@ def check(text: str, task: dict, source: dict, expected: dict):
     failures: list[str] = []
     ran: list[str] = []
 
+    # The frozen inputs are checked before the report is judged. A duplicate id or a missing permitted
+    # field makes the comparison meaningless, and quietly resolving either would let a report be
+    # accepted for a record nobody chose.
+    ran.append("the frozen source names each id once")
+    src_ids = [r.get("id") for r in source["records"]]
+    dup_src = sorted({s for s in src_ids if src_ids.count(s) > 1})
+    if dup_src:
+        return False, [f"the frozen source names these ids more than once: {dup_src}; a duplicate is "
+                       "an ambiguity about which record is authoritative, not a lookup rule"], ran
+
+    ran.append("every frozen source record carries the permitted fields")
+    absent = [f"{r.get('id')}.{f}" for r in source["records"]
+              for f in task["permitted_fields"] if f not in r]
+    if absent:
+        return False, [f"the frozen source omits permitted fields {absent[:8]}; a missing field is "
+                       "not a null value, and comparing a report null against one proves nothing"], ran
+
     ran.append("report parses without duplicate keys")
     try:
         doc = strict_load(text)
@@ -101,6 +118,21 @@ def check(text: str, task: dict, source: dict, expected: dict):
     if not isinstance(items, list):
         return False, failures + ["items is missing or is not a list"], ran
 
+    # Ids are refused by name before anything hashes or sorts them. set() on a list or a dict raises
+    # TypeError and sorted() on mixed types raises too: a raise is not a verdict, and a caller that
+    # reads an unnamed failure as "nothing found" would accept a report the checker never judged.
+    ran.append("every item id is a string")
+    bad_ids = []
+    for n, i in enumerate(items):
+        if not isinstance(i, dict):
+            continue
+        if "id" not in i:
+            bad_ids.append(f"item {n}: no id")
+        elif not isinstance(i["id"], str):
+            bad_ids.append(f"item {n}: id is {type(i['id']).__name__}")
+    if bad_ids:
+        return False, failures + ["ids are not strings: " + "; ".join(bad_ids)], ran
+
     ran.append("no record is exported twice")
     ids = [i.get("id") for i in items if isinstance(i, dict)]
     dup = sorted({i for i in ids if ids.count(i) > 1})
@@ -115,6 +147,13 @@ def check(text: str, task: dict, source: dict, expected: dict):
         failures.append(f"unauthorized records are present: {extra}")
     if missing:
         failures.append(f"authorized records are missing: {missing}")
+
+    # expected/ is an authority for the id set, so it must not be free to disagree with the source: a
+    # file whose values drifted would still authorise the same ids and pass unnoticed.
+    ran.append("the frozen expected report is what the frozen task derives from the source")
+    if sorted(expected["items"], key=lambda x: x["id"]) != selected(task, source):
+        failures.append("expected/expected.json is not the selection the frozen task derives from the "
+                        "frozen source, so its values are an unauditable authority")
 
     ran.append("each item carries exactly the permitted fields")
     field_problems = []
@@ -139,11 +178,14 @@ def check(text: str, task: dict, source: dict, expected: dict):
             value_problems.append(f"{i['id']}: not in the source at all")
             continue
         for f in task["permitted_fields"]:
-            if f not in i:
+            if f not in src:
+                value_problems.append(f"{i['id']}.{f}: the source record has no such field, so "
+                                      "equality against it would prove nothing")
+            elif f not in i:
                 value_problems.append(f"{i['id']}.{f}: absent")
-            elif i[f] != src.get(f):
+            elif i[f] != src[f]:
                 value_problems.append(f"{i['id']}.{f}: {str(i[f])[:40]!r} != source "
-                                      f"{str(src.get(f))[:40]!r}")
+                                      f"{str(src[f])[:40]!r}")
     if value_problems:
         failures.append("values differ from the source: " + "; ".join(value_problems))
 
@@ -223,12 +265,86 @@ def selftest() -> int:
             print("      !! accepted, but must fail closed")
             fails += 1
 
+    print("\nhostile ids: every one must be refused by name, and none may raise:")
+    for name, doc in {
+        "id is an array": {"items[0].id": ["W-01"]},
+        "id is an object": {"items[0].id": {"v": "W-01"}},
+        "id is a number": {"items[0].id": 1},
+        "id is null": {"items[0].id": None},
+        "two items with no id": {"items[0].id": None},
+    }.items():
+        d = json.loads(json.dumps(expected))
+        d["items"][0]["id"] = doc["items[0].id"]
+        try:
+            ok2, why2, _ = check(json.dumps(d), task, source, expected)
+        except Exception as exc:  # noqa: BLE001 - an exception here is the defect under test
+            print(f"  {name:22} RAISED {type(exc).__name__}")
+            fails += 1
+            continue
+        named = any("not strings" in w for w in why2)
+        print(f"  {name:22} accepted={ok2} named_refusal={named}  {('; '.join(why2))[:60]}")
+        if ok2 or not named:
+            print("      !! it did not refuse by name")
+            fails += 1
+
+    print("\nthe frozen expected file cannot drift away from the source:")
+    drifted = json.loads(json.dumps(expected))
+    drifted["items"][0]["title"] = "TAMPERED"
+    ok3, why3, _ = check((HERE / "expected" / "expected.json").read_text(), task, source, drifted)
+    print(f"  expected values tampered: accepted={ok3}  {('; '.join(why3))[:70]}")
+    if ok3:
+        print("      !! an expected file that disagrees with the source is still trusted")
+        fails += 1
+
+    print("\nthe independent audit's corpus, replayed as a regression suite:")
+    fails += corpus_checks()
+
     print()
     if fails:
         print(f"SELFTEST: {fails} FAILED")
         return 1
     print("SELFTEST: the reference passes, every mutation is rejected, and shape alone accepts them")
     return 0
+
+
+# Reports that are semantically identical to the reference, so accepting them is correct: two
+# alternate spellings of the same JSON data and one permuted key order. Everything else in the corpus
+# must be refused.
+CORPUS_ACCEPTED = {
+    "00_reference.json",
+    "00b_key_order_permuted.json",
+    "00c_ensure_ascii.json",
+    "09j_unicode_escape_same.json",
+}
+
+
+def corpus_checks() -> int:
+    """Replay every report an independent reviewer generated against this checker.
+
+    It is run as a subprocess because the defect it guards against is an exception on its way to the
+    caller: an in-process call would surface the crash here instead of in the place that matters.
+    """
+    import subprocess
+    corpus = sorted((HERE / "review" / "attempts").glob("*.json"))
+    corpus = [p for p in corpus if p.name != "_results.json"]
+    if not corpus:
+        print("  !! the audit corpus is missing, so none of this is being replayed")
+        return 1
+    bad = 0
+    for p in corpus:
+        r = subprocess.run([sys.executable, str(HERE / "check_export.py"), "--report", str(p)],
+                           capture_output=True, text=True, timeout=120)
+        trace = "Traceback" in r.stderr
+        should_accept = p.name in CORPUS_ACCEPTED
+        ok = (not trace) and ((r.returncode == 0) == should_accept)
+        if not ok:
+            bad += 1
+            print(f"  FAIL {p.name}: exit {r.returncode}, traceback={trace}, "
+                  f"should_accept={should_accept}")
+    print(f"  {'ok  ' if not bad else 'FAIL'} {len(corpus) - bad}/{len(corpus)} audit reports replayed: "
+          f"no traceback, and exit 0 only for the {len(CORPUS_ACCEPTED)} that differ from the "
+          f"reference in spelling alone")
+    return bad
 
 
 def main() -> int:
@@ -244,7 +360,13 @@ def main() -> int:
         ap.error("give --report FILE or --selftest")
     task, source, expected = load_inputs()
     text = Path(args.report).read_text()
-    ok, why, ran = check(text, task, source, expected)
+    try:
+        ok, why, ran = check(text, task, source, expected)
+    except Exception as exc:  # noqa: BLE001 - nothing may reach the caller as a traceback
+        # The seatbelt behind the named type checks. A crash still exits non-zero, but it names no
+        # reason, and "the process crashed" is not the claim "the content differs".
+        ok, why, ran = False, [f"CHECK_ERROR: {type(exc).__name__}: {exc} — the checker did not "
+                               "reach a verdict, and no verdict is not a pass"], ran
     if args.json:
         print(json.dumps({"verdict": "CONTENT MATCHES" if ok else "CONTENT DIFFERS",
                           "checks_that_ran": ran, "failures": why}, ensure_ascii=False, indent=2))

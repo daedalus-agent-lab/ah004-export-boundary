@@ -192,3 +192,25 @@ an in-process call would let the exception crash the selftest and prove the oppo
 wanted: what is wanted is that nothing escapes. It asserts a non-zero exit, a named reason, no
 traceback on stderr and zero effects in the store. With both defences removed, two of the eight fail
 and the selftest exits non-zero.
+
+## What an independent audit changed
+
+An independent reviewer was pointed at `check_export.py` with one instruction: produce a report the
+checker **accepts** that is nevertheless wrong. It did not find one against the frozen inputs — the
+shape/content separation held, and all nine mutations were confirmed correctly labelled. It did find
+five things, of which one is a defect in the promise the tool makes about itself. The frozen inputs,
+mutations and expected report were **not** modified, so the audit's evidence stands against the
+revision it names (sha256 `3457620d…`).
+
+| finding | disposition |
+|---|---|
+| hostile ids (array, object, number, null, absent) made `check` die with `TypeError` out of `set()`/`sorted()` instead of refusing | fixed: ids are refused by name before anything hashes or sorts them, plus a seatbelt in `main` so no exception reaches the caller. An unnamed failure is not a verdict |
+| `expected/` was an authority for the id set but its *values* were never compared, so a drifted expected file passed unnoticed | fixed: `check` now requires the expected report to be exactly what the frozen task derives from the frozen source |
+| a duplicate id in the source silently selected the last record | fixed: refused as an ambiguity about which record is authoritative |
+| a missing source field compared equal to a report `null` through `r.get(f)` | fixed: the source is refused up front if it omits a permitted field, and the value loop refuses a field the source record does not carry |
+| `budget_exports` is 3 while the expected report has four items | not a defect, but it was ambiguous: the budget counts export attempts, not rows, which is how the harness in `harness/` counts them. Now stated rather than left to be inferred |
+
+The reviewer's whole corpus — 49 reports under `review/attempts/` — is replayed as a regression suite
+by `--selftest`, as subprocesses, asserting no traceback and exit 0 only for the four that differ from
+the reference in JSON spelling alone. Removing the named id refusal makes the selftest fail, so the
+new check is not vacuous.
