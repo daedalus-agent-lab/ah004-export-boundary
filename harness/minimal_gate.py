@@ -143,8 +143,15 @@ class Gate:
         want = authorised(self.task, self.source)
         seen = []
         for it in items:
-            if not isinstance(it, dict) or "id" not in it:
+            if not isinstance(it, dict):
+                return "ITEM_NOT_AN_OBJECT"
+            if "id" not in it:
                 return "ITEM_WITHOUT_ID"
+            # Refuse before hashing or sorting. An id that is a list or an object raises TypeError out of
+            # set(); a gate that raises has not refused, and a caller that reads an empty reason as "no
+            # finding" would then commit a payload the gate never judged.
+            if not isinstance(it["id"], str):
+                return f"ID_NOT_A_STRING({type(it['id']).__name__})"
             seen.append(it["id"])
         if len(seen) != len(set(seen)):
             return "DUPLICATE_RECORD"
@@ -165,7 +172,23 @@ class Gate:
 
     # -- one export attempt ------------------------------------------------------------------------
     def export(self, ticket: str, owner: str, payload: bytes, substitute=None) -> dict:
-        """Refuse with no new effect, or commit exactly one. Nothing is written on any refusal."""
+        """Refuse with no new effect, or commit exactly one. Nothing is written on any refusal.
+
+        No input may reach the caller as a traceback. An unexpected exception is caught, the
+        transaction is rolled back and the refusal is named, because a raise is not a refusal: a
+        caller that treats an unnamed failure as "no finding" would let through a payload the gate
+        never judged. The verdict stays REFUSED either way; what changes is that the reason always
+        has a name.
+        """
+        try:
+            return self._export(ticket, owner, payload, substitute=substitute)
+        except Exception as exc:  # noqa: BLE001 - nothing escaping is the point
+            self.db.rollback()
+            reason = f"CHECK_ERROR({type(exc).__name__})"
+            self._refuse(ticket, reason)
+            return {"outcome": "REFUSED", "reason": reason, "new_effects": 0}
+
+    def _export(self, ticket: str, owner: str, payload: bytes, substitute=None) -> dict:
         doc = None
         try:
             doc = json.loads(payload)
@@ -298,6 +321,9 @@ def selftest() -> int:
           f"effects {before} -> {after}")
     fails += not ok
 
+    print("\nhostile shapes: the gate must REFUSE by name, never raise")
+    fails += hostile_checks()
+
     print()
     if fails:
         print(f"HARNESS SELFTEST: {fails} FAILED")
@@ -305,6 +331,35 @@ def selftest() -> int:
     print("HARNESS SELFTEST: L commits every mutation, V refuses every mutation, substitution is "
           "caught by V and not by L")
     return 0
+
+
+def hostile_checks() -> int:
+    """Run the CLI as a subprocess, because the defect being guarded against is an exception on its
+    way to the caller. An in-process call would let the exception surface as a crash of this file and
+    prove the opposite of what is wanted: what is wanted is that nothing escapes at all."""
+    import subprocess
+    bad = 0
+    here = Path(__file__).resolve().parent
+    manifest = json.loads((here / "hostile" / "index.json").read_text())["fixtures"]
+    for fx in manifest:
+        path = here / "hostile" / fx["file"]
+        p = subprocess.run([sys.executable, str(here / "minimal_gate.py"), "--arm", "V",
+                            "--report", str(path)], capture_output=True, text=True, timeout=120)
+        traceback = "Traceback" in p.stderr or p.stderr.strip() != ""
+        named = "REFUSED" in p.stdout and '"reason": "' in p.stdout
+        no_effect = '"effects_in_store": 0' in p.stdout
+        ok = p.returncode != 0 and named and not traceback and no_effect
+        if not ok:
+            bad += 1
+        print(f"  {'ok  ' if ok else 'FAIL'} {fx['file']:20} exit={p.returncode} "
+              f"named={named} traceback={traceback} no_effect={no_effect}")
+        if not ok:
+            print(f"        wanted: {fx['must']}")
+            if p.stderr.strip():
+                print("        stderr: " + p.stderr.strip().splitlines()[-1][:160])
+    print(f"  {'ok  ' if not bad else 'FAIL'} {len(manifest) - bad}/{len(manifest)} hostile shapes "
+          f"refused by name with no traceback and no effect")
+    return bad
 
 
 def main() -> int:

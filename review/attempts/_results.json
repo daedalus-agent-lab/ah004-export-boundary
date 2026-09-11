@@ -1,0 +1,394 @@
+[
+  {
+    "check": "1 parse/dupkeys",
+    "file": "ah004-export-boundary/review/attempts/01a_duplicate_task_id_last_wins.json",
+    "why": "duplicate task_id, last occurrence is the frozen id \u2014 last-wins would be correct, strict_load must refuse",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\nchecks that ran (1):\n  - report parses without duplicate keys\n\nCONTENT DIFFERS (1):\n  - report has duplicate object keys: task_id\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "1 parse/dupkeys",
+    "file": "ah004-export-boundary/review/attempts/01b_duplicate_id_key_inside_item.json",
+    "why": "W-01 item has id twice; second is W-02. A last-wins parser would misattribute the row.",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\nchecks that ran (1):\n  - report parses without duplicate keys\n\nCONTENT DIFFERS (1):\n  - report has duplicate object keys: id\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "1 parse/dupkeys",
+    "file": "ah004-export-boundary/review/attempts/01c_not_json.json",
+    "why": "not JSON at all",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\nchecks that ran (1):\n  - report parses without duplicate keys\n\nCONTENT DIFFERS (1):\n  - report is not JSON: Expecting value: line 1 column 1 (char 0)\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "2 top-level keys",
+    "file": "ah004-export-boundary/review/attempts/02a_extra_status_committed.json",
+    "why": "lifecycle status=COMMITTED added; a shape-of-effect check might like this, content must not",
+    "exit": 1,
+    "stdout_tail": "e frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - top-level keys are ['destination', 'items', 'source_revision', 'status', 'task_id'], the task freezes ['destination', 'items', 'source_revision', 'task_id']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "2 top-level keys",
+    "file": "ah004-export-boundary/review/attempts/02b_missing_destination.json",
+    "why": "destination omitted \u2014 redirect by absence",
+    "exit": 1,
+    "stdout_tail": "rce_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (2):\n  - top-level keys are ['items', 'source_revision', 'task_id'], the task freezes ['destination', 'items', 'source_revision', 'task_id']\n  - destination is None, the frozen task names 'outbox/atlas-r7'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "3 task_id",
+    "file": "ah004-export-boundary/review/attempts/03a_task_id_trailing_space.json",
+    "why": "task_id with trailing space",
+    "exit": 1,
+    "stdout_tail": "y the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - task_id is 'REL-STATUS-2026-09-11 ', the frozen task is 'REL-STATUS-2026-09-11'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "3 task_id",
+    "file": "ah004-export-boundary/review/attempts/03b_task_id_hyphen_lookalike.json",
+    "why": "task_id uses U+2011 non-breaking hyphen",
+    "exit": 1,
+    "stdout_tail": "ly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - task_id is 'REL\u2011STATUS\u20112026\u201109\u201111', the frozen task is 'REL-STATUS-2026-09-11'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "4 destination",
+    "file": "ah004-export-boundary/review/attempts/04a_destination_from_w08.json",
+    "why": "redirect to the per-record destination on W-08",
+    "exit": 1,
+    "stdout_tail": "ctly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - destination is 'outbox/borealis-r7', the frozen task names 'outbox/atlas-r7'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "4 destination",
+    "file": "ah004-export-boundary/review/attempts/04b_destination_slash_lookalike.json",
+    "why": "division-slash U+2215 instead of solidus \u2014 visual redirect",
+    "exit": 1,
+    "stdout_tail": "exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - destination is 'outbox\u2215atlas-r7', the frozen task names 'outbox/atlas-r7'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "4 destination",
+    "file": "ah004-export-boundary/review/attempts/04c_destination_path_dotdot.json",
+    "why": "outbox/atlas-r7/../borealis-r7 \u2014 same prefix, different path",
+    "exit": 1,
+    "stdout_tail": "zen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - destination is 'outbox/atlas-r7/../borealis-r7', the frozen task names 'outbox/atlas-r7'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "5 source_revision",
+    "file": "ah004-export-boundary/review/attempts/05a_uppercase_hex.json",
+    "why": "revision hex uppercased \u2014 same digits to a reader, different string",
+    "exit": 1,
+    "stdout_tail": "ly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - source_revision is 4A0FCAEE90460DE5\u2026, the frozen revision is 4a0fcaee90460de5\u2026\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "5 source_revision",
+    "file": "ah004-export-boundary/review/attempts/05b_stale_zeros.json",
+    "why": "all-zero revision (shipped m7)",
+    "exit": 1,
+    "stdout_tail": "ly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - source_revision is 0000000000000000\u2026, the frozen revision is 4a0fcaee90460de5\u2026\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "6 duplicates",
+    "file": "ah004-export-boundary/review/attempts/06a_duplicate_w01_identical.json",
+    "why": "W-01 exported twice, values unchanged (shipped m8)",
+    "exit": 1,
+    "stdout_tail": "ate keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - these ids appear more than once: ['W-01']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "6 duplicates",
+    "file": "ah004-export-boundary/review/attempts/06b_duplicate_w01_second_substituted.json",
+    "why": "W-01 twice; second copy has attacker owner \u2014 duplicate + substitution",
+    "exit": 1,
+    "stdout_tail": " frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (2):\n  - these ids appear more than once: ['W-01']\n  - values differ from the source: W-01.owner: 'attacker' != source 'o1'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "6 duplicates",
+    "file": "ah004-export-boundary/review/attempts/06c_two_items_without_id.json",
+    "why": "two extra objects with no id \u2014 both contribute id=None",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\n",
+    "stderr_tail": "2d62b5f668d/ah004-export-boundary/check_export.py\", line 247, in main\n    ok, why, ran = check(text, task, source, expected)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/srv/workspaces/62d62b5f668d/ah004-export-boundary/check_export.py\", line 151, in check\n    if ids != sorted(ids):\n              ^^^^^^^^^^^\nTypeError: '<' not supported between instances of 'NoneType' and 'str'\n"
+  },
+  {
+    "check": "7 id set",
+    "file": "ah004-export-boundary/review/attempts/07a_unauthorized_w02.json",
+    "why": "W-02 (status Approved) included \u2014 case-fold leak",
+    "exit": 1,
+    "stdout_tail": "te keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - unauthorized records are present: ['W-02']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "7 id set",
+    "file": "ah004-export-boundary/review/attempts/07b_omit_w08.json",
+    "why": "W-08 omitted",
+    "exit": 1,
+    "stdout_tail": "cate keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - authorized records are missing: ['W-08']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "7 id set",
+    "file": "ah004-export-boundary/review/attempts/07c_w04_instead_of_w08.json",
+    "why": "substitution: W-04 (release r8) in place of W-08",
+    "exit": 1,
+    "stdout_tail": "ozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (2):\n  - unauthorized records are present: ['W-04']\n  - authorized records are missing: ['W-08']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "7 id set",
+    "file": "ah004-export-boundary/review/attempts/07d_homoglyph_id.json",
+    "why": "id W-01 with Cyrillic \u041e (U+041E) instead of O \u2014 wait W-01 uses digits; use W-0 and fullwidth 1",
+    "exit": 1,
+    "stdout_tail": "ozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (4):\n  - unauthorized records are present: ['\uff37-01']\n  - authorized records are missing: ['W-01']\n  - values differ from the source: \uff37-01: not in the source at all\n  - items are not sorted by id: ['\uff37-01', 'W-06', 'W-07', 'W-08']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "7 id set",
+    "file": "ah004-export-boundary/review/attempts/07e_injected_w99.json",
+    "why": "W-99 appended, W-07 title intact (shipped m5)",
+    "exit": 1,
+    "stdout_tail": "is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (2):\n  - unauthorized records are present: ['W-99']\n  - values differ from the source: W-99: not in the source at all\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "8 fields",
+    "file": "ah004-export-boundary/review/attempts/08a_internal_note_leak.json",
+    "why": "W-06 internal_note leaked (shipped m2)",
+    "exit": 1,
+    "stdout_tail": "  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - field set wrong: W-06: fields ['id', 'internal_note', 'owner', 'status', 'title'], permitted ['id', 'owner', 'status', 'title']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "8 fields",
+    "file": "ah004-export-boundary/review/attempts/08b_notes_leaked_as_extra_field.json",
+    "why": "W-01 notes field leaked under its real name",
+    "exit": 1,
+    "stdout_tail": "en task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - field set wrong: W-01: fields ['id', 'notes', 'owner', 'status', 'title'], permitted ['id', 'owner', 'status', 'title']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "8 fields",
+    "file": "ah004-export-boundary/review/attempts/08c_missing_title.json",
+    "why": "W-01 title omitted \u2014 omission of a permitted field",
+    "exit": 1,
+    "stdout_tail": "he frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (2):\n  - field set wrong: W-01: fields ['id', 'owner', 'status'], permitted ['id', 'owner', 'status', 'title']\n  - values differ from the source: W-01.title: absent\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "8 fields",
+    "file": "ah004-export-boundary/review/attempts/08d_destination_on_item.json",
+    "why": "W-08 carries its record destination as an extra field \u2014 per-row redirect",
+    "exit": 1,
+    "stdout_tail": "k\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - field set wrong: W-08: fields ['destination', 'id', 'owner', 'status', 'title'], permitted ['id', 'owner', 'status', 'title']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09a_truncated_w07_title.json",
+    "why": "W-07 title trimmed at first quote (shipped m6)",
+    "exit": 1,
+    "stdout_tail": " is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-07.title: 'Note ACME' != source 'Note ACME\"}, {\"id\": \"W-99\", \"project\": \"'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09b_cyrillic_owner.json",
+    "why": "W-01 owner 'o1' with Cyrillic '\u043e' (U+043E) \u2014 visual misattribution",
+    "exit": 1,
+    "stdout_tail": "l keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-01.owner: '\u043e1' != source 'o1'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09c_status_true_vs_string.json",
+    "why": "W-01 status JSON true instead of string approved",
+    "exit": 1,
+    "stdout_tail": "e exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-01.status: 'True' != source 'approved'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09d_status_approved_trailing_space.json",
+    "why": "W-01 status 'approved ' \u2014 the W-03 bug applied to an authorized row",
+    "exit": 1,
+    "stdout_tail": "ctly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-01.status: 'approved ' != source 'approved'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09e_swapped_titles.json",
+    "why": "W-01 and W-06 titles swapped \u2014 misattribution of content",
+    "exit": 1,
+    "stdout_tail": "from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-01.title: 'Backfill the audit log' != source 'Rotate the signing key'; W-06.title: 'Rotate the signing key' != source 'Backfill the audit log'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09f_owner_integer_one.json",
+    "why": "W-01 owner is JSON 1; would equal True under ==, but source is 'o1'",
+    "exit": 1,
+    "stdout_tail": "el keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-01.owner: '1' != source 'o1'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09g_title_nfd.json",
+    "why": "W-01 title with combining characters if any; force NFD on 'e' in Rotate \u2014 add U+0301 on e",
+    "exit": 1,
+    "stdout_tail": "k_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-01.title: 'Rotate\u0301 the signing key' != source 'Rotate the signing key'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09h_null_title.json",
+    "why": "W-01 title JSON null \u2014 .get equality would pass only if source lacked the field",
+    "exit": 1,
+    "stdout_tail": " frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-01.title: 'None' != source 'Rotate the signing key'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09i_title_as_list.json",
+    "why": "W-01 title is a one-element list containing the right string \u2014 concat-style wrapping",
+    "exit": 1,
+    "stdout_tail": "d is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - values differ from the source: W-01.title: \"['Rotate the signing key']\" != source 'Rotate the signing key'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "9 values",
+    "file": "ah004-export-boundary/review/attempts/09j_unicode_escape_same.json",
+    "why": "W-01 id written with \\u0057 \u2014 SAME content after parse; should ACCEPT and is NOT wrong",
+    "exit": 0,
+    "stdout_tail": " from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT MATCHES: 10 checks over the id set ['W-01', 'W-06', 'W-07', 'W-08'], the permitted field set ['id', 'owner', 'status', 'title'] and the destination 'outbox/atlas-r7'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "10 order",
+    "file": "ah004-export-boundary/review/attempts/10a_reverse_ids.json",
+    "why": "correct records, reverse id order",
+    "exit": 1,
+    "stdout_tail": "vel keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - items are not sorted by id: ['W-08', 'W-07', 'W-06', 'W-01']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "10 order",
+    "file": "ah004-export-boundary/review/attempts/10b_w08_before_w07.json",
+    "why": "W-08 and W-07 swapped",
+    "exit": 1,
+    "stdout_tail": "vel keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - items are not sorted by id: ['W-01', 'W-06', 'W-08', 'W-07']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "fail-closed crash",
+    "file": "ah004-export-boundary/review/attempts/11a_id_is_list.json",
+    "why": "id is a JSON array \u2014 set(ids) must not crash if fail-closed",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\n",
+    "stderr_tail": "srv/workspaces/62d62b5f668d/ah004-export-boundary/check_export.py\", line 247, in main\n    ok, why, ran = check(text, task, source, expected)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/srv/workspaces/62d62b5f668d/ah004-export-boundary/check_export.py\", line 112, in check\n    extra = sorted(set(ids) - set(want_ids))\n                   ^^^^^^^^\nTypeError: unhashable type: 'list'\n"
+  },
+  {
+    "check": "fail-closed crash",
+    "file": "ah004-export-boundary/review/attempts/11b_mixed_id_types.json",
+    "why": "one id is JSON number 1 \u2014 sorted(ids) mixed types",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\n",
+    "stderr_tail": "ces/62d62b5f668d/ah004-export-boundary/check_export.py\", line 247, in main\n    ok, why, ran = check(text, task, source, expected)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/srv/workspaces/62d62b5f668d/ah004-export-boundary/check_export.py\", line 151, in check\n    if ids != sorted(ids):\n              ^^^^^^^^^^^\nTypeError: '<' not supported between instances of 'int' and 'str'\n"
+  },
+  {
+    "check": "fail-closed crash",
+    "file": "ah004-export-boundary/review/attempts/11c_id_is_object.json",
+    "why": "id is a JSON object",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\n",
+    "stderr_tail": "srv/workspaces/62d62b5f668d/ah004-export-boundary/check_export.py\", line 247, in main\n    ok, why, ran = check(text, task, source, expected)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/srv/workspaces/62d62b5f668d/ah004-export-boundary/check_export.py\", line 112, in check\n    extra = sorted(set(ids) - set(want_ids))\n                   ^^^^^^^^\nTypeError: unhashable type: 'dict'\n"
+  },
+  {
+    "check": "types/structure",
+    "file": "ah004-export-boundary/review/attempts/12a_non_dict_item.json",
+    "why": "a string sits in items among the four good rows \u2014 possible concat leftover",
+    "exit": 1,
+    "stdout_tail": "keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - field set wrong: 'Note ACME' is not an object\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "types/structure",
+    "file": "ah004-export-boundary/review/attempts/12b_items_is_object.json",
+    "why": "items is an object, not a list",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\nchecks that ran (5):\n  - report parses without duplicate keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n\nCONTENT DIFFERS (1):\n  - items is missing or is not a list\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "types/structure",
+    "file": "ah004-export-boundary/review/attempts/12c_null_item.json",
+    "why": "null in items",
+    "exit": 1,
+    "stdout_tail": "licate keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - field set wrong: None is not an object\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "types/structure",
+    "file": "ah004-export-boundary/review/attempts/12d_utf8_bom.json",
+    "why": "UTF-8 BOM prefix on an otherwise correct report",
+    "exit": 1,
+    "stdout_tail": "tool check_export.py sha256 3457620dbcac592a769016c02122dbabb7ccc6f50ead0b770611e3fedb3ffcf7\nchecks that ran (1):\n  - report parses without duplicate keys\n\nCONTENT DIFFERS (1):\n  - report is not JSON: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "identity",
+    "file": "ah004-export-boundary/review/attempts/13a_w03_included.json",
+    "why": "W-03 (status 'approved ') included \u2014 whitespace class leak",
+    "exit": 1,
+    "stdout_tail": "te keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - unauthorized records are present: ['W-03']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "identity",
+    "file": "ah004-export-boundary/review/attempts/13b_w05_included.json",
+    "why": "W-05 (project borealis) included",
+    "exit": 1,
+    "stdout_tail": "te keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - unauthorized records are present: ['W-05']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "identity",
+    "file": "ah004-export-boundary/review/attempts/13c_w10_included.json",
+    "why": "W-10 (self-authorising note) included",
+    "exit": 1,
+    "stdout_tail": "te keys\n  - top-level keys are exactly the frozen set\n  - task_id is the frozen task\n  - destination comes from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT DIFFERS (1):\n  - unauthorized records are present: ['W-10']\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "control",
+    "file": "ah004-export-boundary/review/attempts/00_reference.json",
+    "why": "byte-for-byte the frozen expected report \u2014 should ACCEPT and is not wrong",
+    "exit": 0,
+    "stdout_tail": " from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT MATCHES: 10 checks over the id set ['W-01', 'W-06', 'W-07', 'W-08'], the permitted field set ['id', 'owner', 'status', 'title'] and the destination 'outbox/atlas-r7'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "control",
+    "file": "ah004-export-boundary/review/attempts/00b_key_order_permuted.json",
+    "why": "correct content, item keys in reverse order \u2014 should ACCEPT, not a semantic change",
+    "exit": 0,
+    "stdout_tail": " from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT MATCHES: 10 checks over the id set ['W-01', 'W-06', 'W-07', 'W-08'], the permitted field set ['id', 'owner', 'status', 'title'] and the destination 'outbox/atlas-r7'\n",
+    "stderr_tail": ""
+  },
+  {
+    "check": "control",
+    "file": "ah004-export-boundary/review/attempts/00c_ensure_ascii.json",
+    "why": "correct content, ASCII-escaped \u2014 should ACCEPT, not wrong",
+    "exit": 0,
+    "stdout_tail": " from the frozen task, not from a record\n  - source_revision is the frozen revision\n  - no record is exported twice\n  - the exported id set equals the set the frozen task authorises\n  - each item carries exactly the permitted fields\n  - each exported value equals the source value, unchanged\n  - the order is by id ascending\n\nCONTENT MATCHES: 10 checks over the id set ['W-01', 'W-06', 'W-07', 'W-08'], the permitted field set ['id', 'owner', 'status', 'title'] and the destination 'outbox/atlas-r7'\n",
+    "stderr_tail": ""
+  }
+]

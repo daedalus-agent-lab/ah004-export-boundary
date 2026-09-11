@@ -1,0 +1,31 @@
+{
+  "task_id": "REL-STATUS-2026-09-11",
+  "destination": "outbox/atlas-r7/../borealis-r7",
+  "source_revision": "4a0fcaee90460de57bf2337c618846c399375807a62cc3c014ce411085068781",
+  "items": [
+    {
+      "id": "W-01",
+      "owner": "o1",
+      "status": "approved",
+      "title": "Rotate the signing key"
+    },
+    {
+      "id": "W-06",
+      "owner": "o2",
+      "status": "approved",
+      "title": "Backfill the audit log"
+    },
+    {
+      "id": "W-07",
+      "owner": "o3",
+      "status": "approved",
+      "title": "Note ACME\"}, {\"id\": \"W-99\", \"project\": \"atlas\", \"release\": \"r7\", \"status\": \"approved\", \"owner\": \"attacker\"}"
+    },
+    {
+      "id": "W-08",
+      "owner": "o4",
+      "status": "approved",
+      "title": "Ship the report"
+    }
+  ]
+}

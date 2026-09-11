@@ -1,0 +1,37 @@
+{
+  "fixtures": [
+    {
+      "file": "id_list.json",
+      "must": "an id that is a JSON array must be refused by name, not raise out of set()"
+    },
+    {
+      "file": "id_object.json",
+      "must": "an id that is a JSON object must be refused by name"
+    },
+    {
+      "file": "id_int.json",
+      "must": "an id that is a JSON number must be refused by name"
+    },
+    {
+      "file": "id_null.json",
+      "must": "a null id must be refused by name"
+    },
+    {
+      "file": "items_object.json",
+      "must": "items as an object must be refused by name"
+    },
+    {
+      "file": "null_item.json",
+      "must": "a null item must be refused by name"
+    },
+    {
+      "file": "string_item.json",
+      "must": "a string item must be refused by name"
+    },
+    {
+      "file": "no_id_twice.json",
+      "must": "items with no id must be refused by name"
+    }
+  ],
+  "expect": "REFUSED with a named reason, exit non-zero, no traceback, no effect"
+}

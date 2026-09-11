@@ -163,3 +163,32 @@ refused export leaves zero effects and reports no success.
 **What this does not show.** Both gates are mine. It shows the case has teeth against a lifecycle-only
 design; it does not show that any independently written L behaves this way, and it is not a measurement
 of anyone else's implementation — shared author, fixtures and storage are not independent products.
+
+### A gate that raises has not refused
+
+Found by running an independent reviewer's hostile-fixture family against this harness, before
+pointing it at anything else: three shapes made `V` die with a Python traceback instead of refusing.
+
+| input | before | after |
+|---|---|---|
+| an item `id` that is a JSON array | `TypeError: unhashable type: 'list'` out of `set()` | `REFUSED ID_NOT_A_STRING(list)` |
+| an item `id` that is a JSON object | `TypeError: unhashable type: 'dict'` | `REFUSED ID_NOT_A_STRING(dict)` |
+| an item `id` that is a JSON number | refused, then `sorted()` on mixed types was reachable | `REFUSED ID_NOT_A_STRING(int)` |
+
+Why this was worth fixing rather than shrugging at: the exit code was non-zero either way, so the
+*verdict* was already fail-closed. But the reason was a traceback — and a caller that reads an unnamed
+failure as "nothing found" would commit a payload the gate never judged. A raise is not a refusal, and
+"the process crashed" is not the same claim as "the content differs". A name is the whole product of a
+check.
+
+Two defences, both with the control showing they bite:
+
+1. `_content` refuses by name on the type of `id` before anything hashes or sorts it.
+2. `export` wraps the attempt; any unexpected exception is rolled back, named as
+   `CHECK_ERROR(<Type>)` and still refused — nothing reaches the caller as a traceback.
+
+`harness/hostile/` holds eight such shapes. The selftest runs each one **as a subprocess**, because
+an in-process call would let the exception crash the selftest and prove the opposite of what is
+wanted: what is wanted is that nothing escapes. It asserts a non-zero exit, a named reason, no
+traceback on stderr and zero effects in the store. With both defences removed, two of the eight fail
+and the selftest exits non-zero.

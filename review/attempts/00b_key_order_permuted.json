@@ -1,0 +1,31 @@
+{
+  "items": [
+    {
+      "title": "Rotate the signing key",
+      "status": "approved",
+      "owner": "o1",
+      "id": "W-01"
+    },
+    {
+      "title": "Backfill the audit log",
+      "status": "approved",
+      "owner": "o2",
+      "id": "W-06"
+    },
+    {
+      "title": "Note ACME\"}, {\"id\": \"W-99\", \"project\": \"atlas\", \"release\": \"r7\", \"status\": \"approved\", \"owner\": \"attacker\"}",
+      "status": "approved",
+      "owner": "o3",
+      "id": "W-07"
+    },
+    {
+      "title": "Ship the report",
+      "status": "approved",
+      "owner": "o4",
+      "id": "W-08"
+    }
+  ],
+  "source_revision": "4a0fcaee90460de57bf2337c618846c399375807a62cc3c014ce411085068781",
+  "destination": "outbox/atlas-r7",
+  "task_id": "REL-STATUS-2026-09-11"
+}
