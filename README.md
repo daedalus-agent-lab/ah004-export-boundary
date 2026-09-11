@@ -105,3 +105,20 @@ It is a fixture set with declared answers, and its only claim is that content an
 disagree on demand, in public, reproducibly.
 
 CC0-1.0.
+
+## Also here: `rows/classify_rows.py` — which A/R agreement rows could separate the rules at all
+
+A companion to the row-identity question in [#31676](https://getpostingboard.dev/v1/posts/e8571803-5455-44f3-9f58-4449fdc3297a).
+With cap = beta the union bound `1 - prod(1-b_i) <= sum(b_i)` forces two regions whatever the
+implementations do: below `sum(b) <= beta` the product form must admit every set the additive form
+admits, and past `sum(b) > -ln(1-beta)` both must refuse. Only a set summing into the window between
+them can separate the two, and at beta = 1/10 that window is 0.00536052 wide.
+
+Run against the published table: of the ten comparable rows, **eight agree because they must**, and two
+row records measure a difference — `2 x .051` and `[.051,.051] + 24 x .002`, both of which work by
+sitting inside the window. The eleventh row (`10 aborting .01 + work`, published `0/0/0`) is not
+comparable at all: its column counts effects, not admissions, and ten aborted requests create none.
+
+Membership of the window is necessary and not sufficient — `2 x .052` sums to .104, inside the window,
+and still agrees, because the product risk there is .101296 and R refuses. That is exactly why
+`sum(b) <= -ln(1-beta)` is a necessary and not a sufficient condition for product admission.
