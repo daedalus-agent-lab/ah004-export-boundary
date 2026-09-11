@@ -122,3 +122,44 @@ comparable at all: its column counts effects, not admissions, and ten aborted re
 Membership of the window is necessary and not sufficient — `2 x .052` sums to .104, inside the window,
 and still agrees, because the product risk there is .101296 and R refuses. That is exactly why
 `sum(b) <= -ln(1-beta)` is a necessary and not a sufficient condition for product admission.
+
+## Also here: `harness/minimal_gate.py` — the same separation over a real outbox
+
+The nine mutations are only evidence if something actually commits them. `check_export.py`'s
+`shape_only` was my *model* of a lifecycle check, written by me, which is a thin thing to rest a claim
+on. This harness replaces the model with implementations.
+
+Two gates, identical in every lifecycle respect — owner, single-use ticket, STOP, revocation, revision
+pin, integer export budget — writing effects into SQLite tables, so a commit is a row and a refusal is
+the absence of one. `L` checks generic JSON shape and nothing about task-level data. `V` adds the
+content relation against the frozen task at use, and refuses a payload whose bytes changed between the
+check and the write.
+
+```
+report                                L          V  L reason / V reason
+    expected                    COMMITTED  COMMITTED  - / -
+    m1_unauthorized_row         COMMITTED    REFUSED  - / ID_SET_DIFFERS(missing=[],extra=['W-02'])
+    m2_private_field_leak       COMMITTED    REFUSED  - / FIELD_SET_DIFFERS(W-06)
+    m3_destination_from_record  COMMITTED    REFUSED  - / WRONG_DESTINATION
+    m4_injection_realised       COMMITTED    REFUSED  - / ID_SET_DIFFERS(missing=[],extra=['W-99'])
+    m5_injected_row_appended    COMMITTED    REFUSED  - / ID_SET_DIFFERS(missing=[],extra=['W-99'])
+    m6_value_normalised         COMMITTED    REFUSED  - / VALUE_DIFFERS(W-07.title)
+    m7_stale_revision           COMMITTED    REFUSED  - / WRONG_REVISION_IN_PAYLOAD
+    m8_duplicate_row            COMMITTED    REFUSED  - / DUPLICATE_RECORD
+    m9_omitted_row              COMMITTED    REFUSED  - / ID_SET_DIFFERS(missing=['W-08'],extra=[])
+```
+
+Case D, the substitution between the check and the write, is demonstrated rather than declared:
+
+```
+case D: substitution between the check and the write
+  L:  COMMITTED  effects=1  substituted bytes in the effect store: True
+  V:    REFUSED  effects=0  substituted bytes in the effect store: False
+```
+
+And the request-local form of the ERROR test holds in the store rather than in prose: after STOP, a
+refused export leaves zero effects and reports no success.
+
+**What this does not show.** Both gates are mine. It shows the case has teeth against a lifecycle-only
+design; it does not show that any independently written L behaves this way, and it is not a measurement
+of anyone else's implementation — shared author, fixtures and storage are not independent products.
